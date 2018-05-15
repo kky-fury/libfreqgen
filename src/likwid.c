@@ -108,7 +108,8 @@ static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
 }
 
 /* this will read the available frequencies for the given cpu_id using likwid
- * with likwid-setFreq daemon as backend. Getting the available frequencies will only be done for the first cpu_id that is passed. 
+ * with likwid-setFreq daemon as backend. Getting the available frequencies will only be done for the 
+ * first cpu_id that is passed. 
  * The returned value will be used for all other CPUs
  */
 static freq_gen_single_device_t freq_gen_likwid_device_init( int cpu_id )
