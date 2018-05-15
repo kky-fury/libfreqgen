@@ -40,7 +40,7 @@ CpuTopology_t topo;
 /*This will return the maximal number of logical cpus using the initialized
  * cpu topology
  */
-static int freq_gen_likwid_get_max_entries(   )
+static int freq_gen_likwid_get_max_entries()
 {
     static long long int max = -1;
     if ( max != -1 )
@@ -84,7 +84,7 @@ static freq_gen_interface_t * freq_gen_likwid_init( void )
 /* will initialize the core frequency stuff
  * If it is unable to connect (HPMinit returns != 0), it will set errno and return NULL
  */
-static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
+static freq_gen_interface_t* freq_gen_likwid_init_uncore(void)
 {
     HPMmode(ACCESSMODE_DAEMON);
     if (!initialized)
@@ -97,7 +97,7 @@ static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
         }
         else
         {
-            errno=ret;
+            errno = ret;
             return NULL;
         }
     }
@@ -112,7 +112,7 @@ static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
  * first cpu_id that is passed. 
  * The returned value will be used for all other CPUs
  */
-static freq_gen_single_device_t freq_gen_likwid_device_init( int cpu_id )
+static freq_gen_single_device_t freq_gen_likwid_device_init(int cpu_id)
 {
     if(avail_freqs == NULL)
     {
@@ -121,7 +121,7 @@ static freq_gen_single_device_t freq_gen_likwid_device_init( int cpu_id )
     return cpu_id;
 }
 /* will just return the uncore */
-static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore( int uncore )
+static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore(int uncore)
 {
     return uncore;
 }
@@ -131,7 +131,7 @@ static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore( int uncore 
  * 2O(strlen(avail_frequencies))+ malloc + malloc
  * turbo is ignored
  */
-static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int turbo )
+static freq_gen_setting_t freq_gen_likwid_prepare_access(long long target , int turbo)
 {
     uint64_t current_u=0;
     target=target/1000;
@@ -165,30 +165,30 @@ static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int
  * O(malloc)
  * turbo is ignored
  */
-static freq_gen_setting_t freq_gen_likwid_prepare_access_uncore(long long target,int turbo)
+static freq_gen_setting_t freq_gen_likwid_prepare_access_uncore(long long target, int turbo)
 {
-    uint64_t * setting = malloc(sizeof(uint64_t));
-    *setting=(target/1000000);
+    uint64_t* setting = malloc(sizeof(uint64_t));
+    *setting = (target/1000000);
     return setting;
 }
 
 static long long int freq_gen_likwid_get_frequency(freq_gen_single_device_t fp)
 {
     int frequency = freq_getCpuClockMax( fp );
-    if ( frequency == 0 )
+    if (frequency == 0)
     {
         return -EIO;
     }
     else
     {
-	    return frequency;
+        return frequency;
     }
 }
 
 static long long int freq_gen_likwid_get_min_frequency(freq_gen_single_device_t fp)
 {
-    int frequency = freq_getCpuClockMin( fp );
-    if ( frequency == 0 )
+    int frequency = freq_getCpuClockMin(fp);
+    if (frequency == 0)
     {
         return -EIO;
     }
@@ -204,20 +204,20 @@ static long long int freq_gen_likwid_get_min_frequency(freq_gen_single_device_t 
  */
 static int freq_gen_likwid_set_frequency(freq_gen_single_device_t fp, freq_gen_setting_t setting_in)
 {
-    uint64_t * setting = (uint64_t *) setting_in;
+    uint64_t* setting = (uint64_t *) setting_in;
 #ifdef AVOID_LIKWID_BUG
     freq_setCpuClockMin(fp, *setting);
     freq_setCpuClockMax(fp, *setting);
 #else /* AVOID_LIKWID_BUG */
     uint64_t set_freq = freq_setCpuClockMin(fp, *setting);
-    if ( set_freq == 0 )
+    if (set_freq == 0)
     {
 	    return EIO;
     }
     set_freq = freq_setCpuClockMax(fp, *setting);
-    if ( set_freq == 0 )
+    if (set_freq == 0)
     {
-	    return EIO;
+        return EIO;
     }
 #endif /* AVOID_LIKWID_BUG */
     return 0;
@@ -229,12 +229,12 @@ static int freq_gen_likwid_set_frequency(freq_gen_single_device_t fp, freq_gen_s
  */
 static int freq_gen_likwid_set_min_frequency(freq_gen_single_device_t fp, freq_gen_setting_t setting_in)
 {
-    uint64_t * setting = (uint64_t *) setting_in;
+    uint64_t* setting = (uint64_t *) setting_in;
 #ifdef AVOID_LIKWID_BUG
     freq_setCpuClockMin(fp, *setting);
 #else /* AVOID_LIKWID_BUG */
     uint64_t set_freq = freq_setCpuClockMin(fp, *setting);
-    if ( set_freq == 0 )
+    if (set_freq == 0)
     {
         return EIO;
     }
@@ -245,7 +245,7 @@ static int freq_gen_likwid_set_min_frequency(freq_gen_single_device_t fp, freq_g
 static long long int freq_gen_likwid_get_frequency_uncore(freq_gen_single_device_t fp)
 {
     uint64_t frequency = freq_getUncoreFreqMax( fp );
-    if ( frequency == 0 )
+    if (frequency == 0)
     {
         return -EIO;
     }
@@ -258,7 +258,7 @@ static long long int freq_gen_likwid_get_frequency_uncore(freq_gen_single_device
 static long long int freq_gen_likwid_get_min_frequency_uncore(freq_gen_single_device_t fp)
 {
     uint64_t frequency = freq_getUncoreFreqMin( fp );
-    if ( frequency == 0 )
+    if (frequency == 0)
     {
         return -EIO;
     }
@@ -295,12 +295,12 @@ static int freq_gen_likwid_set_frequency_uncore(freq_gen_single_device_t fp, fre
 
 static int freq_gen_likwid_set_min_frequency_uncore(freq_gen_single_device_t fp, freq_gen_setting_t setting_in)
 {
-    uint64_t * setting = (uint64_t *) setting_in;
+    uint64_t* setting = (uint64_t*) setting_in;
 #ifdef AVOID_LIKWID_BUG
     freq_setUncoreFreqMin(fp, *setting);
 #else /* AVOID_LIKWID_BUG */
     uint64_t set_freq = freq_setUncoreFreqMin(fp, *setting);
-    if ( set_freq == 0 )
+    if (set_freq == 0)
     {
         return EIO;
     }
