@@ -64,10 +64,10 @@ static freq_gen_interface_t * freq_gen_likwid_init( void )
 	if(!initialized)
 	{
 
-	    int err = topology_init();	
+		int err = topology_init();	
 		if(err < 0)
         {
-        	printf("Could not initialize topology module for likwid library");
+			printf("Could not initialize topology module for likwid library");
 			errno = err;
 			return NULL;
 		}
@@ -149,7 +149,7 @@ static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int
 	char * end;
 	while (token != NULL)
 	{
-    	double current = strtod(token,&end)*1000.0;
+		double current = strtod(token,&end)*1000.0;
         current_u = (uint64_t) current;
         current_u=current_u*1000;
 		if (current_u == target)
