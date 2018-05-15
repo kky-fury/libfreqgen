@@ -42,15 +42,15 @@ CpuTopology_t topo;
  */
 static int freq_gen_likwid_get_max_entries(   )
 {
-	static long long int max = -1;
-	if ( max != -1 )
-	{
-		return max;
-	}
-	max = topo->numHWThreads;
-	if ( max == 0 )
-		return -EACCES;
-	return max;
+    static long long int max = -1;
+    if ( max != -1 )
+    {
+	    return max;
+    }
+    max = topo->numHWThreads;
+    if ( max == 0 )
+	    return -EACCES;
+    return max;
 
 }
 
@@ -63,28 +63,21 @@ static freq_gen_interface_t * freq_gen_likwid_init( void )
 {
     if(!initialized)
     {
-
         int err = topology_init();	
-	    if(err < 0)
+        if(err < 0)
         {
-			printf("Could not initialize topology module for likwid library");
-			errno = err;
-			return NULL;
-		}
-
+            printf("Could not initialize topology module for likwid library");
+            errno = err;
+            return NULL;
+        }
         topo = get_cpuTopology();
-
-		initialized =1;
-		return &freq_gen_likwid_cpu_interface;
-		
+        initialized = 1;
+        return &freq_gen_likwid_cpu_interface;
     }
-	else
+    else
     {
-	    return &freq_gen_likwid_cpu_interface;
-	}
-	
-
-
+        return &freq_gen_likwid_cpu_interface;
+    }
 }
 
 
@@ -93,25 +86,25 @@ static freq_gen_interface_t * freq_gen_likwid_init( void )
  */
 static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
 {
-	HPMmode(ACCESSMODE_DAEMON);
-	if (!initialized)
-	{
-		int ret = HPMinit();
-		if (ret == 0)
-		{
-			initialized = 1;
-			return &freq_gen_likwid_uncore_interface;
-		}
-		else
-		{
-			errno=ret;
-			return NULL;
-		}
-	}
-	else
-	{
-		return &freq_gen_likwid_uncore_interface;
-	}
+    HPMmode(ACCESSMODE_DAEMON);
+    if (!initialized)
+    {
+        int ret = HPMinit();
+        if (ret == 0)
+        {
+            initialized = 1;
+            return &freq_gen_likwid_uncore_interface;
+        }
+        else
+        {
+            errno=ret;
+            return NULL;
+        }
+    }
+    else
+    {
+        return &freq_gen_likwid_uncore_interface;
+    }
 }
 
 /* this will read the available frequencies for the given cpu_id using likwid
@@ -120,18 +113,16 @@ static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
  */
 static freq_gen_single_device_t freq_gen_likwid_device_init( int cpu_id )
 {
-	if (avail_freqs == NULL)
+    if(avail_freqs == NULL)
     {
-		avail_freqs = freq_getAvailFreq(cpu_id); 
+        avail_freqs = freq_getAvailFreq(cpu_id);
     }
     return cpu_id;
-
-
 }
 /* will just return the uncore */
 static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore( int uncore )
 {
-	return uncore;
+    return uncore;
 }
 
 /* prepares the setting for core frequencies by checking which is the first frequency available
@@ -146,26 +137,26 @@ static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int
     char* temp_str = malloc(strlen(avail_freqs) + 1);
     strcpy(temp_str, avail_freqs);
     char* token = strtok(temp_str," ");
-	char * end;
-	while (token != NULL)
-	{
-        double current = strtod(token,&end)*1000.0;
+    char* end;
+    while(token != NULL)
+    {
+        double current = strtod(token, &end)*1000.0;
         current_u = (uint64_t) current;
-        current_u=current_u*1000;
-        if (current_u == target)
-	    {
+        current_u = current_u*1000;
+        if(current_u == target)
+        {
             break;
-	    }
-        token = strtok(NULL," ");
+        }
+        token = strtok(NULL, " ");
     }
-	if (current_u < target )
-	{
-	    return NULL;
-	}
+    if(current_u < target)
+    {
+        return NULL;
+    }
     uint64_t * setting = malloc(sizeof(double));
     *setting=(current_u);
     free(temp_str);
-	return setting;
+    return setting;
 }
 
 
@@ -175,23 +166,23 @@ static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int
  */
 static freq_gen_setting_t freq_gen_likwid_prepare_access_uncore(long long target,int turbo)
 {
-	uint64_t * setting = malloc(sizeof(uint64_t));
-	*setting=(target/1000000);
-	return setting;
+    uint64_t * setting = malloc(sizeof(uint64_t));
+    *setting=(target/1000000);
+    return setting;
 }
 
 static long long int freq_gen_likwid_get_frequency(freq_gen_single_device_t fp)
 {
 	//int frequency = freq_getCpuClockMax( fp );
-	uint64_t frequency = freq_getCpuClockCurrent(fp);
-	if ( frequency == 0 )
-	{
-		return -EIO;
-	}
-	else
-	{
-		return frequency;
-	}
+    uint64_t frequency = freq_getCpuClockCurrent(fp);
+    if ( frequency == 0 )
+    {
+        return -EIO;
+    }
+    else
+    {
+	    return frequency;
+    }
 }
 
 static long long int freq_gen_likwid_get_min_frequency(freq_gen_single_device_t fp)
@@ -253,15 +244,15 @@ static int freq_gen_likwid_set_min_frequency(freq_gen_single_device_t fp, freq_g
 
 static long long int freq_gen_likwid_get_frequency_uncore(freq_gen_single_device_t fp)
 {
-	uint64_t frequency = freq_getUncoreFreqMax( fp );
-	if ( frequency == 0 )
-	{
-		return -EIO;
-	}
-	else
-	{
-		return frequency * 1000000;
-	}
+    uint64_t frequency = freq_getUncoreFreqMax( fp );
+    if ( frequency == 0 )
+    {
+        return -EIO;
+    }
+    else
+    {
+        return frequency * 1000000;
+    }
 }
 
 static long long int freq_gen_likwid_get_min_frequency_uncore(freq_gen_single_device_t fp)
@@ -283,23 +274,23 @@ static long long int freq_gen_likwid_get_min_frequency_uncore(freq_gen_single_de
  */
 static int freq_gen_likwid_set_frequency_uncore(freq_gen_single_device_t fp, freq_gen_setting_t setting_in)
 {
-	uint64_t * setting = (uint64_t *) setting_in;
+    uint64_t * setting = (uint64_t *) setting_in;
 #ifdef AVOID_LIKWID_BUG
-	freq_setUncoreFreqMin(fp, *setting);
-	freq_setUncoreFreqMax(fp, *setting);
+    freq_setUncoreFreqMin(fp, *setting);
+    freq_setUncoreFreqMax(fp, *setting);
 #else /* AVOID_LIKWID_BUG */
-	uint64_t set_freq = freq_setUncoreFreqMin(fp, *setting);
-	if ( set_freq == 0 )
-	{
-		return EIO;
-	}
-	set_freq = freq_setUncoreFreqMax(fp, *setting);
-	if ( set_freq == 0 )
-	{
-		return EIO;
-	}
+    uint64_t set_freq = freq_setUncoreFreqMin(fp, *setting);
+    if ( set_freq == 0 )
+    {
+        return EIO;
+    }
+    set_freq = freq_setUncoreFreqMax(fp, *setting);
+    if ( set_freq == 0 )
+    {
+        return EIO;
+    }
 #endif /* AVOID_LIKWID_BUG */
-	return 0;
+    return 0;
 }
 
 static int freq_gen_likwid_set_min_frequency_uncore(freq_gen_single_device_t fp, freq_gen_setting_t setting_in)
@@ -320,7 +311,7 @@ static int freq_gen_likwid_set_min_frequency_uncore(freq_gen_single_device_t fp,
 /* Just free some data structure */
 static void freq_gen_likwid_unprepare_access(freq_gen_setting_t setting)
 {
-	free(setting);
+    free(setting);
 }
 
 /* The daemon will do it, so nothing to do here **/
@@ -329,44 +320,44 @@ static void freq_gen_likwid_do_nothing(freq_gen_single_device_t fd, int cpu) {}
 /* close connection to access daemon and free some data structures **/
 static void freq_gen_likwid_finalize()
 {
-	HPMfinalize();
-	if (avail_freqs)
-		free(avail_freqs);
+    HPMfinalize();
+    if (avail_freqs)
+        free(avail_freqs);
 }
 
 static freq_gen_interface_t freq_gen_likwid_cpu_interface =
 {
-		.name = "likwid-entries",
-		.init_device = freq_gen_likwid_device_init,
-		.get_num_devices = freq_gen_likwid_get_max_entries,
-		.prepare_set_frequency = freq_gen_likwid_prepare_access,
-		.get_frequency = freq_gen_likwid_get_frequency,
-        .get_min_frequency = freq_gen_likwid_get_min_frequency,
-        .set_frequency = freq_gen_likwid_set_frequency,
-        .set_min_frequency = freq_gen_likwid_set_min_frequency,
-		.unprepare_set_frequency = freq_gen_likwid_unprepare_access,
-		.close_device = freq_gen_likwid_do_nothing,
-		.finalize=freq_gen_likwid_finalize
+    .name = "likwid-entries",
+    .init_device = freq_gen_likwid_device_init,
+    .get_num_devices = freq_gen_likwid_get_max_entries,
+    .prepare_set_frequency = freq_gen_likwid_prepare_access,
+    .get_frequency = freq_gen_likwid_get_frequency,
+    .get_min_frequency = freq_gen_likwid_get_min_frequency,
+    .set_frequency = freq_gen_likwid_set_frequency,
+    .set_min_frequency = freq_gen_likwid_set_min_frequency,
+    .unprepare_set_frequency = freq_gen_likwid_unprepare_access,
+    .close_device = freq_gen_likwid_do_nothing,
+    .finalize=freq_gen_likwid_finalize
 };
 
 static freq_gen_interface_t freq_gen_likwid_uncore_interface =
 {
-		.name = "likwid-entries",
-		.init_device = freq_gen_likwid_device_init_uncore,
-		.get_num_devices = freq_gen_get_num_uncore,
-		.prepare_set_frequency = freq_gen_likwid_prepare_access_uncore,
-		.get_frequency = freq_gen_likwid_get_frequency_uncore,
-        .get_min_frequency = freq_gen_likwid_get_min_frequency_uncore,
-		.set_frequency = freq_gen_likwid_set_frequency_uncore,
-        .set_min_frequency = freq_gen_likwid_set_min_frequency_uncore,
-		.unprepare_set_frequency = freq_gen_likwid_unprepare_access,
-		.close_device = freq_gen_likwid_do_nothing,
-		.finalize=freq_gen_likwid_do_nothing
+    .name = "likwid-entries",
+    .init_device = freq_gen_likwid_device_init_uncore,
+    .get_num_devices = freq_gen_get_num_uncore,
+    .prepare_set_frequency = freq_gen_likwid_prepare_access_uncore,
+    .get_frequency = freq_gen_likwid_get_frequency_uncore,
+    .get_min_frequency = freq_gen_likwid_get_min_frequency_uncore,
+    .set_frequency = freq_gen_likwid_set_frequency_uncore,
+    .set_min_frequency = freq_gen_likwid_set_min_frequency_uncore,
+    .unprepare_set_frequency = freq_gen_likwid_unprepare_access,
+    .close_device = freq_gen_likwid_do_nothing,
+    .finalize=freq_gen_likwid_do_nothing
 };
 
 
 freq_gen_interface_internal_t freq_gen_likwid_interface_internal =
 {
-		.init_cpufreq = freq_gen_likwid_init,
-		.init_uncorefreq = freq_gen_likwid_init_uncore
+    .init_cpufreq = freq_gen_likwid_init,
+    .init_uncorefreq = freq_gen_likwid_init_uncore
 };
