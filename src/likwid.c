@@ -61,11 +61,11 @@ static int freq_gen_likwid_get_max_entries(   )
  */
 static freq_gen_interface_t * freq_gen_likwid_init( void )
 {
-	if(!initialized)
-	{
+    if(!initialized)
+    {
 
-		int err = topology_init();	
-		if(err < 0)
+        int err = topology_init();	
+	    if(err < 0)
         {
 			printf("Could not initialize topology module for likwid library");
 			errno = err;
@@ -77,10 +77,10 @@ static freq_gen_interface_t * freq_gen_likwid_init( void )
 		initialized =1;
 		return &freq_gen_likwid_cpu_interface;
 		
-	}
+    }
 	else
     {
-		return &freq_gen_likwid_cpu_interface;
+	    return &freq_gen_likwid_cpu_interface;
 	}
 	
 
@@ -142,25 +142,25 @@ static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore( int uncore 
 static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int turbo )
 {
     uint64_t current_u=0;
-	target=target/1000;
-	char* temp_str = malloc(strlen(avail_freqs) + 1);
+    target=target/1000;
+    char* temp_str = malloc(strlen(avail_freqs) + 1);
     strcpy(temp_str, avail_freqs);
     char* token = strtok(temp_str," ");
 	char * end;
 	while (token != NULL)
 	{
-		double current = strtod(token,&end)*1000.0;
+        double current = strtod(token,&end)*1000.0;
         current_u = (uint64_t) current;
         current_u=current_u*1000;
-		if (current_u == target)
-		{
+        if (current_u == target)
+	    {
             break;
-		}
+	    }
         token = strtok(NULL," ");
     }
 	if (current_u < target )
 	{
-		return NULL;
+	    return NULL;
 	}
     uint64_t * setting = malloc(sizeof(double));
     *setting=(current_u);
@@ -213,23 +213,23 @@ static long long int freq_gen_likwid_get_min_frequency(freq_gen_single_device_t 
  */
 static int freq_gen_likwid_set_frequency(freq_gen_single_device_t fp, freq_gen_setting_t setting_in)
 {
-	uint64_t * setting = (uint64_t *) setting_in;
+    uint64_t * setting = (uint64_t *) setting_in;
 #ifdef AVOID_LIKWID_BUG
-	freq_setCpuClockMin(fp, *setting);
-	freq_setCpuClockMax(fp, *setting);
+    freq_setCpuClockMin(fp, *setting);
+    freq_setCpuClockMax(fp, *setting);
 #else /* AVOID_LIKWID_BUG */
-	uint64_t set_freq = freq_setCpuClockMin(fp, *setting);
-	if ( set_freq == 0 )
-	{
-		return EIO;
-	}
-	set_freq = freq_setCpuClockMax(fp, *setting);
-	if ( set_freq == 0 )
-	{
-		return EIO;
-	}
+    uint64_t set_freq = freq_setCpuClockMin(fp, *setting);
+    if ( set_freq == 0 )
+    {
+	    return EIO;
+    }
+    set_freq = freq_setCpuClockMax(fp, *setting);
+    if ( set_freq == 0 )
+    {
+	    return EIO;
+    }
 #endif /* AVOID_LIKWID_BUG */
-	return 0;
+    return 0;
 }
 
 /* applies core frequency setting
@@ -326,7 +326,7 @@ static void freq_gen_likwid_unprepare_access(freq_gen_setting_t setting)
 /* The daemon will do it, so nothing to do here **/
 static void freq_gen_likwid_do_nothing(freq_gen_single_device_t fd, int cpu) {}
 
-/* close connection to access daemon and free some data structures */
+/* close connection to access daemon and free some data structures **/
 static void freq_gen_likwid_finalize()
 {
 	HPMfinalize();
