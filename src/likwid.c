@@ -34,15 +34,12 @@ static int initialized;
 /* this will store the avail freqs as char array */
 static char* avail_freqs;
 
-/* this will return the maximal number of CPUs by looking for /dev/cpu/(nr)/msr[-safe]
- * time complexity is O(num_cpus) for the first call. Afterwards its O(1), since the return value is buffered
- */
-unsigned int used_cpus = 0;
-int *cpus;
-CpuInfo_t info;
+/*Structure to initialize machine's topology using likwid*/
 CpuTopology_t topo;
 
-
+/*This will return the maximal number of logical cpus using the initialized
+ * cpu topology
+ */
 static int freq_gen_likwid_get_max_entries(   )
 {
 	static long long int max = -1;
@@ -57,71 +54,32 @@ static int freq_gen_likwid_get_max_entries(   )
 
 }
 
-int change_freq_gov_once()
-{
-        static int called = 0;
-        int ret;
-        if(called)
-        {
-                return 0;
-        }
-
-        called = 1;
-        int num_cpus = sysconf(_SC_NPROCESSORS_CONF);
-        #ifdef VERBOSE
-        printf("Value of num_cpus \t %u \n", num_cpus);
-        #endif
-        for (unsigned cpu = 0; cpu < num_cpus; cpu++)
-        {
-                ret = freq_setGovernor(cpu, "userspace");
-                if(!ret)
-                {
-                        return -1;
-                }
-
-        }
-
-        #ifdef VERBOSE
-        for(unsigned cpu = 0; cpu < num_cpus;cpu++)
-        {
-                char* curr_gov = freq_getGovernor(cpu);
-                printf("Frequency Gov is %s \n", curr_gov);
-        }
-        #endif
-        return 0;
-
-}
 
 
-/* will initialize the core frequency stuff
- * If it is unable to connect (HPMinit returns != 0), it will set errno and return NULL
+/* will initialize the machine topology
+ * If it is unable to initialize , it will set errno and return NULL
  */
 static freq_gen_interface_t * freq_gen_likwid_init( void )
 {
 	if(!initialized)
 	{
-		int rc = change_freq_gov_once();
-		if(rc <  0)
-        	{
-			printf("error setting userspace governor");
-			return NULL;
-        	}
 
-	        int err_1 = topology_init();	
-		if(err_1 < 0)
-        	{
-        		printf("Could not initialize topology module for likwid library");
+	    int err = topology_init();	
+		if(err < 0)
+        {
+        	printf("Could not initialize topology module for likwid library");
+			errno = err;
 			return NULL;
 		}
 
-        	info = get_cpuInfo();
-        	topo = get_cpuTopology();
+        topo = get_cpuTopology();
 
 		initialized =1;
 		return &freq_gen_likwid_cpu_interface;
 		
 	}
-	else{
+	else
+    {
 		return &freq_gen_likwid_cpu_interface;
 	}
 	
@@ -156,15 +114,17 @@ static freq_gen_interface_t * freq_gen_likwid_init_uncore( void )
 	}
 }
 
-/* this will add a thread to access the msr and read the available frequencies for the given cpu_id
- * Getting the available frequencies will only be done for the first cpu_id that is passed. The returned
- * value will be used for all other CPUs
- * */
+/* this will read the available frequencies for the given cpu_id using likwid
+ * with likwid-setFreq daemon as backend. Getting the available frequencies will only be done for the first cpu_id that is passed. 
+ * The returned value will be used for all other CPUs
+ */
 static freq_gen_single_device_t freq_gen_likwid_device_init( int cpu_id )
 {
 	if (avail_freqs == NULL)
-		avail_freqs = freq_getAvailFreq(cpu_id);
-	return cpu_id;
+    {
+		avail_freqs = freq_getAvailFreq(cpu_id); 
+    }
+    return cpu_id;
 
 
 }
@@ -175,31 +135,36 @@ static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore( int uncore 
 }
 
 /* prepares the setting for core frequencies by checking which is the first frequency available
- * that's equal or higher the proposed frequency
- * O(strlen(avail_frequencies))+malloc
+ * that's equal or lower the proposed frequency
+ * 2O(strlen(avail_frequencies))+ malloc + malloc
  * turbo is ignored
  */
 static freq_gen_setting_t freq_gen_likwid_prepare_access( long long target , int turbo )
 {
-	uint64_t current_u=0;
+    uint64_t current_u=0;
 	target=target/1000;
-	char* token = strtok(avail_freqs," ");
+	char* temp_str = malloc(strlen(avail_freqs) + 1);
+    strcpy(temp_str, avail_freqs);
+    char* token = strtok(temp_str," ");
 	char * end;
 	while (token != NULL)
 	{
-		double current = strtod(token,&end)*1000.0;
-		current_u = (uint64_t) current;
-		current_u=current_u*1000;
-		if (current_u > target)
-			break;
-		token = strtok(NULL," ");
-	}
+    	double current = strtod(token,&end)*1000.0;
+        current_u = (uint64_t) current;
+        current_u=current_u*1000;
+		if (current_u == target)
+		{
+            break;
+		}
+        token = strtok(NULL," ");
+    }
 	if (current_u < target )
 	{
 		return NULL;
 	}
-	uint64_t * setting = malloc(sizeof(double));
-	*setting=(current_u);
+    uint64_t * setting = malloc(sizeof(double));
+    *setting=(current_u);
+    free(temp_str);
 	return setting;
 }
 
@@ -219,8 +184,6 @@ static long long int freq_gen_likwid_get_frequency(freq_gen_single_device_t fp)
 {
 	//int frequency = freq_getCpuClockMax( fp );
 	uint64_t frequency = freq_getCpuClockCurrent(fp);
-	printf("Checking for Core %d \n", fp);
-	printf("The clock frequency is %lu  for Cpu %d\n", frequency, fp);
 	if ( frequency == 0 )
 	{
 		return -EIO;
@@ -265,9 +228,6 @@ static int freq_gen_likwid_set_frequency(freq_gen_single_device_t fp, freq_gen_s
 	{
 		return EIO;
 	}
-	printf("The frequency of cpu: %d shoulde be %llu \n",fp, *setting);
-	uint64_t check_frequency = freq_getCpuClockCurrent(fp);
-	printf("The clock frequency is %lu  for Cpu %d \n", check_frequency, fp);
 #endif /* AVOID_LIKWID_BUG */
 	return 0;
 }
@@ -381,9 +341,9 @@ static freq_gen_interface_t freq_gen_likwid_cpu_interface =
 		.get_num_devices = freq_gen_likwid_get_max_entries,
 		.prepare_set_frequency = freq_gen_likwid_prepare_access,
 		.get_frequency = freq_gen_likwid_get_frequency,
-        	.get_min_frequency = freq_gen_likwid_get_min_frequency,
-        	.set_frequency = freq_gen_likwid_set_frequency,
-        	.set_min_frequency = freq_gen_likwid_set_min_frequency,
+        .get_min_frequency = freq_gen_likwid_get_min_frequency,
+        .set_frequency = freq_gen_likwid_set_frequency,
+        .set_min_frequency = freq_gen_likwid_set_min_frequency,
 		.unprepare_set_frequency = freq_gen_likwid_unprepare_access,
 		.close_device = freq_gen_likwid_do_nothing,
 		.finalize=freq_gen_likwid_finalize
