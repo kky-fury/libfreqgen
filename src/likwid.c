@@ -323,7 +323,7 @@ static void freq_gen_likwid_unprepare_access(freq_gen_setting_t setting)
 	free(setting);
 }
 
-/* The daemon will do it, so nothing to do here */
+/* The daemon will do it, so nothing to do here **/
 static void freq_gen_likwid_do_nothing(freq_gen_single_device_t fd, int cpu) {}
 
 /* close connection to access daemon and free some data structures */
