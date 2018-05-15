@@ -174,8 +174,7 @@ static freq_gen_setting_t freq_gen_likwid_prepare_access_uncore(long long target
 
 static long long int freq_gen_likwid_get_frequency(freq_gen_single_device_t fp)
 {
-	//int frequency = freq_getCpuClockMax( fp );
-    uint64_t frequency = freq_getCpuClockCurrent(fp);
+    int frequency = freq_getCpuClockMax( fp );
     if ( frequency == 0 )
     {
         return -EIO;
