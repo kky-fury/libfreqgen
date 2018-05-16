@@ -59,7 +59,7 @@ static int freq_gen_likwid_get_max_entries()
 /* will initialize the machine topology
  * If it is unable to initialize , it will set errno and return NULL
  */
-static freq_gen_interface_t * freq_gen_likwid_init( void )
+static freq_gen_interface_t* freq_gen_likwid_init( void )
 {
     if(!initialized)
     {
@@ -128,35 +128,28 @@ static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore(int uncore)
 
 /* prepares the setting for core frequencies by checking which is the first frequency available
  * that's equal or lower the proposed frequency
- * 2O(strlen(avail_frequencies))+ malloc + malloc
+ * O(strlen(avail_frequencies))+ malloc
  * turbo is ignored
  */
 static freq_gen_setting_t freq_gen_likwid_prepare_access(long long target , int turbo)
 {
     uint64_t current_u=0;
     target=target/1000;
-    char* temp_str = malloc(strlen(avail_freqs) + 1);
-    strcpy(temp_str, avail_freqs);
-    char* token = strtok(temp_str," ");
-    char* end;
-    while(token != NULL)
+    char* token = avail_freqs;
+    while(token != '\0' && token != NULL)
     {
-        double current = strtod(token, &end)*1000.0;
+        double current = strtod(token, NULL)*1000;
         current_u = (uint64_t) current;
-        current_u = current_u*1000;
-        if(current_u == target)
+        current_u=current_u*1000;
+        token = strpbrk(token, " ");
+        if(current_u <= target)
         {
             break;
         }
-        token = strtok(NULL, " ");
-    }
-    if(current_u < target)
-    {
-        return NULL;
+        token++;
     }
     uint64_t * setting = malloc(sizeof(double));
     *setting=(current_u);
-    free(temp_str);
     return setting;
 }
 
@@ -174,27 +167,27 @@ static freq_gen_setting_t freq_gen_likwid_prepare_access_uncore(long long target
 
 static long long int freq_gen_likwid_get_frequency(freq_gen_single_device_t fp)
 {
-    int frequency = freq_getCpuClockMax( fp );
+    uint64_t frequency = freq_getCpuClockMax(fp);
     if (frequency == 0)
     {
         return -EIO;
     }
     else
     {
-        return frequency;
+        return (long long) frequency;
     }
 }
 
 static long long int freq_gen_likwid_get_min_frequency(freq_gen_single_device_t fp)
 {
-    int frequency = freq_getCpuClockMin(fp);
+    uint64_t frequency = freq_getCpuClockMin(fp);
     if (frequency == 0)
     {
         return -EIO;
     }
     else
     {
-        return frequency;
+        return (long long) frequency;
     }
 }
 
@@ -320,7 +313,6 @@ static void freq_gen_likwid_do_nothing(freq_gen_single_device_t fd, int cpu) {}
 /* close connection to access daemon and free some data structures **/
 static void freq_gen_likwid_finalize()
 {
-    HPMfinalize();
     if (avail_freqs)
         free(avail_freqs);
 }
