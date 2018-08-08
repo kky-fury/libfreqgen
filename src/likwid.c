@@ -133,10 +133,14 @@ static freq_gen_single_device_t  freq_gen_likwid_device_init_uncore(int uncore)
  */
 static freq_gen_setting_t freq_gen_likwid_prepare_access(long long target , int turbo)
 {
-    uint64_t current_u=0;
-    target=target/1000;
-    char* token = avail_freqs;
-    while(token != '\0' && token != NULL)
+    uint64_t current_u = 0;
+    target = target / 1000;
+    char* temp_freqs = strdup(avail_freqs);
+    if ( temp_freqs == NULL )
+      return NULL;
+    char* token = strtok(temp_freqs, " ");
+    char* end;
+    while (token != NULL)
     {
         double current = strtod(token, NULL)*1000;
         current_u = (uint64_t) current;
@@ -317,9 +321,8 @@ static void freq_gen_likwid_finalize()
         free(avail_freqs);
 }
 
-static freq_gen_interface_t freq_gen_likwid_cpu_interface =
-{
-    .name = "likwid-entries",
+static freq_gen_interface_t freq_gen_likwid_cpu_interface = {
+    .name = "likwid",
     .init_device = freq_gen_likwid_device_init,
     .get_num_devices = freq_gen_likwid_get_max_entries,
     .prepare_set_frequency = freq_gen_likwid_prepare_access,
@@ -332,9 +335,8 @@ static freq_gen_interface_t freq_gen_likwid_cpu_interface =
     .finalize=freq_gen_likwid_finalize
 };
 
-static freq_gen_interface_t freq_gen_likwid_uncore_interface =
-{
-    .name = "likwid-entries",
+static freq_gen_interface_t freq_gen_likwid_uncore_interface = {
+    .name = "likwid",
     .init_device = freq_gen_likwid_device_init_uncore,
     .get_num_devices = freq_gen_get_num_uncore,
     .prepare_set_frequency = freq_gen_likwid_prepare_access_uncore,
@@ -347,9 +349,8 @@ static freq_gen_interface_t freq_gen_likwid_uncore_interface =
     .finalize=freq_gen_likwid_do_nothing
 };
 
-
-freq_gen_interface_internal_t freq_gen_likwid_interface_internal =
-{
+freq_gen_interface_internal_t freq_gen_likwid_interface_internal = {
+    .name = "likwid",
     .init_cpufreq = freq_gen_likwid_init,
     .init_uncorefreq = freq_gen_likwid_init_uncore
 };
